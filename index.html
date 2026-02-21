@@ -290,7 +290,7 @@
     <div id="startScreen" class="screen active">
       <div class="card">
         <h1>ПОСТРОЙ МАВР</h1>
-        <div class="subtitle">Construction Battle Simulator</div>
+        <div class="subtitle">Нет времени объяснять. Нужно строить МАВР!</div>
         
         <div class="form-group">
           <label>Ваше имя</label>
@@ -467,6 +467,7 @@
         document.getElementById('gameScreen').classList.remove('active');
         document.getElementById('resultScreen').classList.add('active');
         
+        playArtillerySound();
         if (playerProgress >= 100 && botProgress >= 100) {
           title.innerText = "Ничья";
           title.className = "result-title";
@@ -482,6 +483,49 @@
           title.className = "result-title defeat";
           msg.innerText = `${currentOpponent.name} успел построить мавр раньше вас. Вы убиты!`;
           icon.innerText = "💀";
+        }
+      }
+
+      function playArtillerySound() {
+        try {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          
+          // 1. Initial "Thump" (Sine wave)
+          const osc = audioCtx.createOscillator();
+          const oscGain = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(40, audioCtx.currentTime + 0.1);
+          oscGain.gain.setValueAtTime(1, audioCtx.currentTime);
+          oscGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+          osc.connect(oscGain);
+          oscGain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.3);
+
+          // 2. Explosion Noise
+          const bufferSize = audioCtx.sampleRate * 2;
+          const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+          }
+          const noise = audioCtx.createBufferSource();
+          noise.buffer = buffer;
+          const noiseFilter = audioCtx.createBiquadFilter();
+          noiseFilter.type = 'lowpass';
+          noiseFilter.frequency.setValueAtTime(1000, audioCtx.currentTime);
+          noiseFilter.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 1.5);
+          const noiseGain = audioCtx.createGain();
+          noiseGain.gain.setValueAtTime(0.8, audioCtx.currentTime);
+          noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.5);
+          noise.connect(noiseFilter);
+          noiseFilter.connect(noiseGain);
+          noiseGain.connect(audioCtx.destination);
+          noise.start();
+          noise.stop(audioCtx.currentTime + 1.5);
+        } catch (e) {
+          console.error("Audio error:", e);
         }
       }
 
