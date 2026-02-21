@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Click Builder: Opponent Challenge</title>
+    <style>
+      :root {
+        --bg: #0a0a0a;
+        --zinc-900: #18181b;
+        --zinc-800: #27272a;
+        --zinc-500: #71717a;
+        --emerald-500: #10b981;
+        --emerald-600: #059669;
+        --red-500: #ef4444;
+        --red-600: #dc2626;
+      }
+
+      body {
+        margin: 0;
+        font-family: 'Inter', -apple-system, sans-serif;
+        background: var(--bg);
+        color: white;
+        overflow: hidden;
+      }
+
+      .screen {
+        display: none;
+        height: 100vh;
+        width: 100%;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .screen.active {
+        display: flex;
+      }
+
+      /* Start Screen Styles */
+      .card {
+        background: rgba(24, 24, 27, 0.5);
+        border: 1px solid var(--zinc-800);
+        padding: 2rem;
+        border-radius: 1.5rem;
+        width: 100%;
+        max-width: 400px;
+        backdrop-filter: blur(8px);
+        text-align: center;
+      }
+
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 900;
+        font-style: italic;
+        letter-spacing: -0.05em;
+        color: var(--emerald-500);
+        margin: 0 0 0.5rem 0;
+      }
+
+      .subtitle {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        color: var(--zinc-500);
+        margin-bottom: 2rem;
+      }
+
+      .form-group {
+        text-align: left;
+        margin-bottom: 1.5rem;
+      }
+
+      label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--zinc-500);
+        margin-bottom: 0.5rem;
+        padding-left: 0.25rem;
+      }
+
+      input, select {
+        width: 100%;
+        background: black;
+        border: 1px solid var(--zinc-800);
+        color: white;
+        padding: 0.75rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        box-sizing: border-box;
+        outline: none;
+        transition: border-color 0.2s;
+      }
+
+      input:focus, select:focus {
+        border-color: var(--emerald-500);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 1rem;
+        border: none;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+      }
+
+      .btn-primary {
+        background: var(--emerald-600);
+        color: white;
+        box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);
+      }
+
+      .btn-primary:hover {
+        background: var(--emerald-500);
+      }
+
+      /* Game Screen Styles */
+      .game-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+      }
+
+      .panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        padding: 2rem;
+      }
+
+      .panel-left {
+        border-right: 1px solid var(--zinc-900);
+      }
+
+      .panel-right {
+        background: rgba(24, 24, 27, 0.2);
+      }
+
+      .header-info {
+        position: absolute;
+        top: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .panel-left .header-info { left: 2rem; }
+      .panel-right .header-info { right: 2rem; text-align: right; flex-direction: row-reverse; }
+
+      .avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .panel-left .avatar { background: rgba(16, 185, 129, 0.1); color: var(--emerald-500); }
+      .panel-right .avatar { background: rgba(239, 68, 68, 0.1); color: var(--red-500); }
+
+      .label-small { font-size: 0.7rem; font-weight: 700; color: var(--zinc-500); text-transform: uppercase; letter-spacing: 0.1em; }
+      .name-large { font-size: 1.125rem; font-weight: 700; }
+
+      .progress-value {
+        font-size: 4rem;
+        font-family: monospace;
+        font-weight: 700;
+        margin-bottom: 1rem;
+      }
+
+      .panel-left .progress-value { color: var(--emerald-500); }
+      .panel-right .progress-value { color: var(--red-500); }
+
+      .building-box {
+        width: 180px;
+        height: 320px;
+        background: rgba(24, 24, 27, 0.5);
+        border: 1px solid var(--zinc-800);
+        border-bottom: none;
+        border-radius: 0.5rem 0.5rem 0 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .building-box img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        clip-path: inset(100% 0 0 0);
+        transition: clip-path 0.2s linear;
+      }
+
+      #playerImage {
+        transform: scaleX(-1);
+      }
+
+      .grid-overlay {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-template-rows: repeat(8, 1fr);
+        opacity: 0.1;
+      }
+
+      .grid-cell { border: 0.5px solid var(--zinc-500); }
+
+      .fill {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        transition: height 0.2s linear;
+      }
+
+      .panel-left .fill { background: var(--emerald-600); }
+      .panel-right .fill { background: var(--red-600); }
+
+      .fill-cap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+      }
+
+      .panel-left .fill-cap { background: #34d399; box-shadow: 0 0 15px rgba(52, 211, 153, 0.5); }
+      .panel-right .fill-cap { background: #f87171; box-shadow: 0 0 15px rgba(248, 113, 113, 0.5); }
+
+      .build-btn {
+        margin-top: 2rem;
+        padding: 1.5rem 3rem;
+        font-size: 1.5rem;
+        font-weight: 900;
+        font-style: italic;
+        text-transform: uppercase;
+        border-radius: 1rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.1s;
+      }
+
+      .panel-left .build-btn {
+        background: var(--emerald-600);
+        color: white;
+        box-shadow: 0 10px 20px rgba(16, 185, 129, 0.3);
+      }
+
+      .panel-left .build-btn:active { transform: scale(0.95); }
+      .panel-right .build-btn { background: var(--zinc-800); color: var(--zinc-500); cursor: not-allowed; opacity: 0.5; }
+
+      /* Result Screen */
+      .result-card {
+        text-align: center;
+        padding: 3rem;
+      }
+
+      .result-title {
+        font-size: 3.5rem;
+        font-weight: 900;
+        font-style: italic;
+        text-transform: uppercase;
+        margin-bottom: 0.5rem;
+      }
+
+      .victory { color: var(--emerald-500); }
+      .defeat { color: var(--red-500); }
+    </style>
+  </head>
+  <body>
+    <!-- Start Screen -->
+    <div id="startScreen" class="screen active">
+      <div class="card">
+        <h1>ПОСТРОЙ МАВР</h1>
+        <div class="subtitle">Construction Battle Simulator</div>
+        
+        <div class="form-group">
+          <label>Ваше имя</label>
+          <input type="text" id="playerNameInput" placeholder="Введите имя..." />
+        </div>
+
+        <div class="form-group">
+          <label>Против кого играем</label>
+          <select id="opponentSelect">
+            <option value="putin">xxPutinxx (Легкий)</option>
+            <option value="s1d" selected>-=S1D=- (Средний)</option>
+            <option value="saske">Saske_Lenking (Сложный)</option>
+          </select>
+        </div>
+
+        <button class="btn btn-primary" onclick="startGame()">НАЧАТЬ ИГРУ</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+      <div class="game-container">
+        <!-- Player -->
+        <div class="panel panel-left">
+          <div class="header-info">
+            <div class="avatar">U</div>
+            <div>
+              <div class="label-small">Builder</div>
+              <div class="name-large" id="playerDisplayName">Player</div>
+            </div>
+          </div>
+          <div class="progress-value" id="playerProgressText">0%</div>
+          <div class="building-box">
+            <div class="grid-overlay" id="gridPlayer"></div>
+            <img id="playerImage" src="assets/mavor.png" />
+          </div>
+          <button class="build-btn" onmousedown="playerClick()">BUILD</button>
+        </div>
+
+        <!-- Bot -->
+        <div class="panel panel-right">
+          <div class="header-info">
+            <div class="avatar">B</div>
+            <div>
+              <div class="label-small">Opponent</div>
+              <div class="name-large" id="botDisplayName">Bot</div>
+            </div>
+          </div>
+          <div class="progress-value" id="botProgressText">0%</div>
+          <div class="building-box">
+            <div class="grid-overlay" id="gridBot"></div>
+            <img id="botImage" src="assets/mavor.png" />
+          </div>
+          <button class="build-btn">AUTO-BOT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result Screen -->
+    <div id="resultScreen" class="screen">
+      <div class="card result-card">
+        <div id="resultIcon" style="font-size: 4rem; margin-bottom: 1rem;">🏆</div>
+        <div class="result-title" id="resultTitle">Victory!</div>
+        <p id="resultMessage" style="color: var(--zinc-500); margin-bottom: 2rem;">You out-built the opponent!</p>
+        <button class="btn btn-primary" onclick="resetGame()">ИГРАТЬ СНОВА</button>
+      </div>
+    </div>
+
+    <script>
+      let playerProgress = 0;
+      let botProgress = 0;
+      let botInterval = null;
+      let isGameOver = false;
+
+      const OPPONENTS = {
+        putin: { name: 'xxPutinxx', multiplier: 0.6 },
+        s1d: { name: '-=S1D=-', multiplier: 1.0 },
+        saske: { name: 'Saske_Lenking', multiplier: 1.6 }
+      };
+
+      let currentOpponent = OPPONENTS.s1d;
+
+      // Create grid cells
+      function createGrids() {
+        const grids = ['gridPlayer', 'gridBot'];
+        grids.forEach(id => {
+          const el = document.getElementById(id);
+          el.innerHTML = '';
+          for(let i=0; i<32; i++) {
+            const cell = document.createElement('div');
+            cell.className = 'grid-cell';
+            el.appendChild(cell);
+          }
+        });
+      }
+      createGrids();
+
+      function startGame() {
+        const nameInput = document.getElementById('playerNameInput').value || 'Player';
+        const oppKey = document.getElementById('opponentSelect').value;
+        
+        currentOpponent = OPPONENTS[oppKey];
+        
+        document.getElementById('playerDisplayName').innerText = nameInput;
+        document.getElementById('botDisplayName').innerText = currentOpponent.name;
+        
+        playerProgress = 0;
+        botProgress = 0;
+        isGameOver = false;
+        
+        updateUI();
+        
+        document.getElementById('startScreen').classList.remove('active');
+        document.getElementById('resultScreen').classList.remove('active');
+        document.getElementById('gameScreen').classList.add('active');
+        
+        startBot();
+      }
+
+      function updateUI() {
+        document.getElementById('playerProgressText').innerText = Math.floor(playerProgress) + '%';
+        document.getElementById('botProgressText').innerText = Math.floor(botProgress) + '%';
+        
+        document.getElementById('playerImage').style.clipPath = `inset(${100 - playerProgress}% 0 0 0)`;
+        document.getElementById('botImage').style.clipPath = `inset(${100 - botProgress}% 0 0 0)`;
+      }
+
+      function playerClick() {
+        if (isGameOver || playerProgress >= 100) return;
+        
+        let increment = 100 / (100 + playerProgress);
+        playerProgress = Math.min(100, playerProgress + increment);
+        
+        updateUI();
+        checkWin();
+      }
+
+      function startBot() {
+        if (botInterval) clearInterval(botInterval);
+        
+        botInterval = setInterval(() => {
+          if (isGameOver || botProgress >= 100) {
+            clearInterval(botInterval);
+            return;
+          }
+          
+          let baseIncrement = 100 / (120 + botProgress * 1.2);
+          let increment = baseIncrement * currentOpponent.multiplier;
+          botProgress = Math.min(100, botProgress + increment);
+          
+          updateUI();
+          checkWin();
+        }, 200);
+      }
+
+      function checkWin() {
+        if (isGameOver) return;
+
+        if (playerProgress >= 100 || botProgress >= 100) {
+          isGameOver = true;
+          clearInterval(botInterval);
+          
+          setTimeout(() => {
+            showResult();
+          }, 500);
+        }
+      }
+
+      function showResult() {
+        const title = document.getElementById('resultTitle');
+        const msg = document.getElementById('resultMessage');
+        const icon = document.getElementById('resultIcon');
+        
+        document.getElementById('gameScreen').classList.remove('active');
+        document.getElementById('resultScreen').classList.add('active');
+        
+        if (playerProgress >= 100 && botProgress >= 100) {
+          title.innerText = "Ничья";
+          title.className = "result-title";
+          msg.innerText = "Вы оба построили Мавр одновременно.";
+          icon.innerText = "🤝";
+        } else if (playerProgress >= 100) {
+          title.innerText = "Победа!";
+          title.className = "result-title victory";
+          msg.innerText = "Вы построили Мавр! Вы победили!";
+          icon.innerText = "🏆";
+        } else {
+          title.innerText = "Поражение";
+          title.className = "result-title defeat";
+          msg.innerText = `${currentOpponent.name} успел построить мавр раньше вас. Вы убиты!`;
+          icon.innerText = "💀";
+        }
+      }
+
+      function resetGame() {
+        document.getElementById('resultScreen').classList.remove('active');
+        document.getElementById('startScreen').classList.add('active');
+      }
+    </script>
+  </body>
+</html>
+
